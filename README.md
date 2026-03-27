@@ -44,9 +44,36 @@ flowchart LR
 
 ## Install
 
-**Prebuilt binaries** live on the repo’s **Releases** page (not under **Packages**). The sidebar **Packages** section is for registries such as npm, Maven, or container images; this project only uploads zip/tar archives as release assets. Pushes to `main` create prereleases tagged **`main-1`**, **`main-2`**, … (GitHub Actions workflow run number). Pushing a **`v*`** tag creates a stable release.
+### Prebuilt binaries (macOS, Linux, Windows)
 
-Build from source (Go 1.22+):
+GitHub’s **Packages** sidebar is only for **registry** packages (npm, Maven, container images, and similar). It does **not** list plain zip/tar installers for macOS, Linux, or Windows. Those files are **release assets** on this repository’s **Releases** page (see [About releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)): open the repo → **Releases** → choose a version → download the archive for your platform.
+
+Each release includes:
+
+| Platform | Archive (stable URL on *latest* release) |
+|----------|------------------------------------------|
+| Linux x86_64 | `tars_linux_amd64.tar.gz` |
+| Linux arm64 | `tars_linux_arm64.tar.gz` |
+| macOS x86_64 | `tars_darwin_amd64.tar.gz` |
+| macOS Apple Silicon | `tars_darwin_arm64.tar.gz` |
+| Windows x86_64 | `tars_windows_amd64.zip` |
+| Windows arm64 | `tars_windows_arm64.zip` |
+
+Versioned filenames (e.g. `tars_v0.0.1_linux_amd64.tar.gz`) and `checksums.txt` are on the same release page.
+
+**Direct download** for the *current* latest release (replace `OWNER` and `REPO`):
+
+```text
+https://github.com/OWNER/REPO/releases/latest/download/tars_linux_amd64.tar.gz
+https://github.com/OWNER/REPO/releases/latest/download/tars_darwin_arm64.tar.gz
+https://github.com/OWNER/REPO/releases/latest/download/tars_windows_amd64.zip
+```
+
+Extract the binary, put it on your `PATH`, then run `tars connect` if you use agent integration.
+
+**Release cadence:** pushes to **`main`** create prereleases **`v0.0.1`**, **`v0.0.2`**, … (patch = workflow run number). Pushing a **`v*`** tag (e.g. `v1.0.0`) creates a stable release.
+
+### Build from source (Go 1.22+)
 
 ```bash
 go build -o tars ./cmd/tars

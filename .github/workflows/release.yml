@@ -34,8 +34,8 @@ jobs:
       CGO_ENABLED: "0"
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
-      # Tag push: semver tag (e.g. v1.0.0). Branch push: readable id (main-<run#>), unique per CI run.
-      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('main-{0}', github.run_number) }}
+      # Tag push: semver tag (e.g. v1.0.0). Branch push: v0.0.1, v0.0.2, … (patch from workflow run #).
+      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.{0}', github.run_number) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env:
-      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('main-{0}', github.run_number) }}
+      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.{0}', github.run_number) }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -82,6 +82,13 @@ jobs:
           mkdir -p release
           find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' \) -exec cp {} release/ \;
           cd release
+          # Stable names so https://github.com/OWNER/REPO/releases/latest/download/<file> always points at the newest build.
+          for f in tars_*_linux_amd64.tar.gz; do [ -f "$f" ] && cp "$f" tars_linux_amd64.tar.gz && break; done
+          for f in tars_*_linux_arm64.tar.gz; do [ -f "$f" ] && cp "$f" tars_linux_arm64.tar.gz && break; done
+          for f in tars_*_darwin_amd64.tar.gz; do [ -f "$f" ] && cp "$f" tars_darwin_amd64.tar.gz && break; done
+          for f in tars_*_darwin_arm64.tar.gz; do [ -f "$f" ] && cp "$f" tars_darwin_arm64.tar.gz && break; done
+          for f in tars_*_windows_amd64.zip; do [ -f "$f" ] && cp "$f" tars_windows_amd64.zip && break; done
+          for f in tars_*_windows_arm64.zip; do [ -f "$f" ] && cp "$f" tars_windows_arm64.zip && break; done
           sha256sum tars_* > checksums.txt
 
       # Immutable-release repos: prereleases become published before all assets finish uploading.
