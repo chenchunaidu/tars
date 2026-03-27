@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"tars/internal/core"
 	"tars/internal/formula"
@@ -150,7 +153,84 @@ func AllTaps() ([]Tap, error) {
 	return out, nil
 }
 
-// FindFormula searches Formulas/*.json in core first, then other taps.
+// formulaFirstLetterDir picks the Homebrew-style letter bucket under Formulas/:
+// a–z for names starting with an ASCII letter, "0" for a leading digit, "@" otherwise.
+func formulaFirstLetterDir(toolName string) string {
+	toolName = strings.TrimSpace(toolName)
+	if toolName == "" {
+		return "@"
+	}
+	r, w := utf8.DecodeRuneInString(toolName)
+	if r == utf8.RuneError && w == 1 {
+		return "@"
+	}
+	if r < utf8.RuneSelf {
+		c := unicode.ToLower(r)
+		switch {
+		case c >= 'a' && c <= 'z':
+			return string(c)
+		case c >= '0' && c <= '9':
+			return "0"
+		}
+		return "@"
+	}
+	l := unicode.ToLower(r)
+	if l >= 'a' && l <= 'z' {
+		return string(l)
+	}
+	if unicode.IsDigit(r) {
+		return "0"
+	}
+	return "@"
+}
+
+func formulaJSONPaths(dir, toolName string) []string {
+	low := strings.ToLower(toolName)
+	fn1 := toolName + ".json"
+	fn2 := low + ".json"
+	sub := formulaFirstLetterDir(toolName)
+
+	seen := map[string]struct{}{}
+	var paths []string
+	add := func(p string) {
+		if _, ok := seen[p]; ok {
+			return
+		}
+		seen[p] = struct{}{}
+		paths = append(paths, p)
+	}
+	add(filepath.Join(dir, fn1))
+	if fn2 != fn1 {
+		add(filepath.Join(dir, fn2))
+	}
+	add(filepath.Join(dir, sub, fn1))
+	if fn2 != fn1 {
+		add(filepath.Join(dir, sub, fn2))
+	}
+	return paths
+}
+
+func collectFormulaJSONFiles(formulasDir string) ([]string, error) {
+	if _, err := os.Stat(formulasDir); os.IsNotExist(err) {
+		return nil, nil
+	}
+	var out []string
+	err := filepath.WalkDir(formulasDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if strings.EqualFold(filepath.Ext(path), ".json") {
+			out = append(out, path)
+		}
+		return nil
+	})
+	return out, err
+}
+
+// FindFormula searches Formulas (flat or Formulas/<letter>/ like Homebrew) in core first, then other taps.
 func FindFormula(toolName string) (*formula.Formula, string, error) {
 	_ = core.Ensure()
 	taps, err := AllTaps()
@@ -159,8 +239,7 @@ func FindFormula(toolName string) (*formula.Formula, string, error) {
 	}
 	for _, t := range taps {
 		dir := filepath.Join(t.Path, "Formulas")
-		for _, fn := range []string{toolName + ".json", strings.ToLower(toolName) + ".json"} {
-			p := filepath.Join(dir, fn)
+		for _, p := range formulaJSONPaths(dir, toolName) {
 			if f, err := formula.LoadFile(p); err == nil {
 				f.Tap = t.Name
 				return f, p, nil
@@ -195,15 +274,13 @@ func ListFormulas() ([]string, error) {
 	var out []string
 	for _, t := range taps {
 		dir := filepath.Join(t.Path, "Formulas")
-		entries, err := os.ReadDir(dir)
+		paths, err := collectFormulaJSONFiles(dir)
 		if err != nil {
 			continue
 		}
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
-				continue
-			}
-			out = append(out, filepath.Join(t.Name, strings.TrimSuffix(e.Name(), ".json")))
+		for _, p := range paths {
+			name := strings.TrimSuffix(filepath.Base(p), ".json")
+			out = append(out, filepath.Join(t.Name, name))
 		}
 	}
 	return out, nil
