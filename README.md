@@ -71,6 +71,14 @@ https://github.com/OWNER/REPO/releases/latest/download/tars_windows_amd64.zip
 
 Extract the binary, run **`tars link`**, open a **new** terminal (or `source` your rc file), then run `tars connect` if you use agent integration.
 
+**macOS (“can’t be opened because Apple cannot check it for malicious software”):** Release builds are not Apple-notarized. After extracting, clear the download quarantine and run again:
+
+```bash
+xattr -dr com.apple.quarantine /path/to/tars
+```
+
+Or in Finder: **Control-click** `tars` → **Open** once, or use **System Settings → Privacy & Security → Open Anyway** after a blocked launch.
+
 **Release cadence:** each push to **`main`** (including merged PRs) runs **Tag version on main**, which finds the highest existing `vMAJOR.MINOR.PATCH` tag, bumps the **patch** (`v1.2.3` → `v1.2.4`), pushes that tag, then in the **same** workflow run builds binaries and publishes the GitHub Release (GitHub does not run a separate workflow for tag pushes made with the default `GITHUB_TOKEN`). Pushing a **`v*`** tag yourself triggers that same workflow and performs the build and release for that tag. If `main`’s tip commit **already** has a tag, the auto-tagger does nothing so you don’t double-tag the same commit.
 
 ### Build from source (Go 1.22+)
