@@ -40,7 +40,7 @@ flowchart LR
 1. **Formulas** (JSON) describe name, version, download URL, `sha256`, binaries, and optional usage text for agents.
 2. **`tars install`** downloads the artifact, checks the hash, unpacks under `~/.tars/installs`, symlinks into `~/.tars/bin`, updates `~/.tars/registry.json` and `~/.tars/catalog/tools.json`, refreshes `~/.tars/tools.md`, then runs the same **connect** step as `tars connect` (unless that step fails; you can retry with `tars connect`).
 3. **`tars connect`** rebuilds `tools.md` and merges a managed block into global agent files so assistants read `tools.md` when the task may involve those CLIs.
-4. Put **`~/.tars/bin` on your PATH** in shells where you run installed tools.
+4. Run **`tars link`** once so the **`tars` command is on your PATH** in new terminals (it symlinks into `~/.tars/bin` and updates your shell rc or Windows user PATH). Same directory holds tools from **`tars install`**.
 
 ## Install
 
@@ -69,7 +69,7 @@ https://github.com/OWNER/REPO/releases/latest/download/tars_darwin_arm64.tar.gz
 https://github.com/OWNER/REPO/releases/latest/download/tars_windows_amd64.zip
 ```
 
-Extract the binary, put it on your `PATH`, then run `tars connect` if you use agent integration.
+Extract the binary, run **`tars link`**, open a **new** terminal (or `source` your rc file), then run `tars connect` if you use agent integration.
 
 **Release cadence:** each push to **`main`** (including merged PRs) runs **Tag version on main**, which finds the highest existing `vMAJOR.MINOR.PATCH` tag, bumps the **patch** (`v1.2.3` → `v1.2.4`), pushes that tag, then in the **same** workflow run builds binaries and publishes the GitHub Release (GitHub does not run a separate workflow for tag pushes made with the default `GITHUB_TOKEN`). Pushing a **`v*`** tag yourself triggers that same workflow and performs the build and release for that tag. If `main`’s tip commit **already** has a tag, the auto-tagger does nothing so you don’t double-tag the same commit.
 
@@ -105,6 +105,10 @@ The argument is a formula **name** (resolved from core + tapped repos) or a path
 ### `tars uninstall <name>`
 
 Remove an installed tool (prefix, symlinks, registry entry, catalog entry), refresh `tools.md`, and run **connect**.
+
+### `tars link`
+
+Install **`tars` on your command-line PATH** for future shells: symlinks this binary to `~/.tars/bin`, then prepends `~/.tars/bin` to PATH by editing `~/.zshrc`, `~/.bashrc` / `~/.bash_profile`, or Fish’s `config.fish` (from `$SHELL`), or the **Windows user PATH** in PowerShell. Safe to run again (skips if already set up). For the **current** POSIX shell it also prints `export PATH=…` to copy-paste.
 
 ### `tars list`
 

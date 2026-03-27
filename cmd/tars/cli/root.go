@@ -23,6 +23,7 @@ Formulas come from the default core repository (homebrew-core analogue, cloned t
 core URL with TARS_CORE_URL.`,
 	Version: version.Version,
 	Example: `  tars --version
+  tars link
   tars update && tars install ripgrep
   tars list
   tars list --available
@@ -36,6 +37,7 @@ func Execute() error {
 		cmdUninstall(),
 		cmdList(),
 		cmdInfo(),
+		cmdLink(),
 		cmdTap(),
 		cmdPublish(),
 		cmdCatalog(),
