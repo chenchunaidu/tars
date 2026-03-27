@@ -48,7 +48,7 @@ jobs:
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY="tars.exe"
           fi
-          go build -trimpath -ldflags="-s -w" -o "$BINARY" ./cmd/tars
+          go build -trimpath -ldflags="-s -w -X tars/internal/version.Version=${VERSION}" -o "$BINARY" ./cmd/tars
           mkdir -p dist
           STEM="tars_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}"
           if [ "${{ matrix.goos }}" = "windows" ]; then

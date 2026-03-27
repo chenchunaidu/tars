@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"tars/internal/version"
 )
 
 var rootCmd = &cobra.Command{
@@ -19,6 +21,13 @@ so assistants check tools.md when relevant.
 Formulas come from the default core repository (homebrew-core analogue, cloned to
 ~/.tars/taps/core) plus any extra taps added with "tap add". Override the
 core URL with NXTOOLS_CORE_URL.`,
+	Version: version.Version,
+	Example: `  tars --version
+  tars update && tars install ripgrep
+  tars list
+  tars list --available
+  tars connect --copy .
+  tars help install`,
 }
 
 func Execute() error {
