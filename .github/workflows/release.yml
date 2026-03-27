@@ -84,11 +84,19 @@ jobs:
           cd release
           sha256sum tars_* > checksums.txt
 
+      # Immutable-release repos: prereleases become published before all assets finish uploading.
+      # Create as draft, attach every asset, then publish (see action-gh-release draft input notes).
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
           name: ${{ env.VERSION }}
           prerelease: ${{ github.ref_type != 'tag' }}
+          draft: true
           files: release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release
+        run: gh release edit "${VERSION}" --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
