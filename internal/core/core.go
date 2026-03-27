@@ -13,7 +13,7 @@ import (
 const (
 	// DefaultCoreGitURL is the canonical formula repo (homebrew-core analogue).
 	// Override with TARS_CORE_URL.
-	DefaultCoreGitURL = "https://github.com/tars/homebrew-core.git"
+	DefaultCoreGitURL = "https://github.com/chenchunaidu/tars-tools.git"
 )
 
 // GitURL returns the git remote for the core formula repository.
