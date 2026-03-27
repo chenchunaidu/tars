@@ -11,7 +11,7 @@ import (
 func cmdTap() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "tap",
-		Short: "Manage extra formula taps (core is implicit; see NXTOOLS_CORE_URL)",
+		Short: "Manage extra formula taps (core is implicit; see TARS_CORE_URL)",
 	}
 	root.AddCommand(
 		&cobra.Command{

@@ -12,14 +12,14 @@ import (
 
 const (
 	// DefaultCoreGitURL is the canonical formula repo (homebrew-core analogue).
-	// Override with NXTOOLS_CORE_URL.
+	// Override with TARS_CORE_URL.
 	DefaultCoreGitURL = "https://github.com/tars/homebrew-core.git"
 )
 
 // GitURL returns the git remote for the core formula repository.
-// Set NXTOOLS_CORE_URL to "" or "none" to disable the core tap.
+// Set TARS_CORE_URL to "" or "none" to disable the core tap.
 func GitURL() string {
-	v := strings.TrimSpace(os.Getenv("NXTOOLS_CORE_URL"))
+	v := strings.TrimSpace(os.Getenv("TARS_CORE_URL"))
 	if v == "" {
 		return DefaultCoreGitURL
 	}

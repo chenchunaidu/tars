@@ -20,7 +20,7 @@ so assistants check tools.md when relevant.
 
 Formulas come from the default core repository (homebrew-core analogue, cloned to
 ~/.tars/taps/core) plus any extra taps added with "tap add". Override the
-core URL with NXTOOLS_CORE_URL.`,
+core URL with TARS_CORE_URL.`,
 	Version: version.Version,
 	Example: `  tars --version
   tars update && tars install ripgrep

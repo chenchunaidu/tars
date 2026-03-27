@@ -67,7 +67,7 @@ func SaveList(taps []Tap) error {
 // Add clones url into taps dir and registers the tap (third-party taps; core is implicit).
 func Add(name, gitURL string) error {
 	if strings.EqualFold(name, "core") {
-		return fmt.Errorf(`tap name "core" is reserved for the default formula repo; set NXTOOLS_CORE_URL instead`)
+		return fmt.Errorf(`tap name "core" is reserved for the default formula repo; set TARS_CORE_URL instead`)
 	}
 	base, err := paths.Taps()
 	if err != nil {

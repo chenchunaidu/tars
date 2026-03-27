@@ -142,7 +142,7 @@ Generate shell completion scripts (see `tars completion --help`).
 
 | Variable | Description |
 |----------|-------------|
-| `NXTOOLS_CORE_URL` | Git remote URL for the core formula repo (default: `https://github.com/tars/homebrew-core.git`). Set to `none` or `-` to disable the core tap. |
+| `TARS_CORE_URL` | Git remote URL for the core formula repo (default: `https://github.com/tars/homebrew-core.git`). Set to `none` or `-` to disable the core tap. |
 
 ## Layout under `~/.tars`
 
