@@ -1,9 +1,8 @@
+# Runs only when a version tag exists (created by tag-version-on-main.yml on each main push).
 name: Release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "v*"
 
@@ -34,8 +33,7 @@ jobs:
       CGO_ENABLED: "0"
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
-      # Tag push: semver tag (e.g. v1.0.0). Branch push: v0.0.1, v0.0.2, … (patch from workflow run #).
-      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.{0}', github.run_number) }}
+      VERSION: ${{ github.ref_name }}
 
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +67,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env:
-      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.{0}', github.run_number) }}
+      VERSION: ${{ github.ref_name }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -97,7 +95,7 @@ jobs:
         with:
           tag_name: ${{ env.VERSION }}
           name: ${{ env.VERSION }}
-          prerelease: ${{ github.ref_type != 'tag' }}
+          prerelease: false
           draft: true
           files: release/*
         env:

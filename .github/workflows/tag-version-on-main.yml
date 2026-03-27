@@ -1,0 +1,50 @@
+# Every push to main (including PR merges) gets a new semver git tag; that tag push
+# triggers release.yml to build binaries and publish the GitHub Release.
+name: Tag version on main
+
+on:
+  push:
+    branches:
+      - main
+
+# Avoid two merges racing on the same "next" patch version.
+concurrency:
+  group: tag-version-on-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push next patch tag
+        run: |
+          set -euo pipefail
+          if git describe --exact-match --tags HEAD 2>/dev/null; then
+            echo "HEAD already has a tag; skipping (no duplicate tag for this commit)."
+            exit 0
+          fi
+          git fetch --tags --force
+          latest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1 || true)"
+          if [ -z "$latest" ]; then
+            newtag="v0.0.1"
+          else
+            ver="${latest#v}"
+            major="${ver%%.*}"
+            rest="${ver#*.}"
+            minor="${rest%%.*}"
+            patch="${rest#*.}"
+            patch=$((patch + 1))
+            newtag="v${major}.${minor}.${patch}"
+          fi
+          echo "Tagging ${newtag} at $(git rev-parse --short HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$newtag" -m "release ${newtag}"
+          git push origin "refs/tags/${newtag}"

@@ -71,7 +71,7 @@ https://github.com/OWNER/REPO/releases/latest/download/tars_windows_amd64.zip
 
 Extract the binary, put it on your `PATH`, then run `tars connect` if you use agent integration.
 
-**Release cadence:** pushes to **`main`** create prereleases **`v0.0.1`**, **`v0.0.2`**, … (patch = workflow run number). Pushing a **`v*`** tag (e.g. `v1.0.0`) creates a stable release.
+**Release cadence:** each push to **`main`** (including merged PRs) runs **Tag version on main**, which finds the highest existing `vMAJOR.MINOR.PATCH` tag, bumps the **patch** (`v1.2.3` → `v1.2.4`), pushes that tag, and then **Release** builds and uploads assets. Pushing a **`v*`** tag yourself (any commit) also triggers **Release**. If `main`’s tip commit **already** has a tag, the auto-tagger does nothing so you don’t double-tag the same commit.
 
 ### Build from source (Go 1.22+)
 
