@@ -44,6 +44,8 @@ flowchart LR
 
 ## Install
 
+**Prebuilt binaries** live on the repo’s **Releases** page (not under **Packages**). The sidebar **Packages** section is for registries such as npm, Maven, or container images; this project only uploads zip/tar archives as release assets. Pushes to `main` create prereleases tagged **`main-1`**, **`main-2`**, … (GitHub Actions workflow run number). Pushing a **`v*`** tag creates a stable release.
+
 Build from source (Go 1.22+):
 
 ```bash
