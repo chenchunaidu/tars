@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"tars/internal/agentconnect"
 	"tars/internal/binlink"
 	"tars/internal/catalog"
 	"tars/internal/formula"
@@ -16,6 +17,7 @@ import (
 	"tars/internal/paths"
 	"tars/internal/registry"
 	"tars/internal/tap"
+	"tars/internal/toolsmd"
 )
 
 func cmdInstall() *cobra.Command {
@@ -92,10 +94,16 @@ func runInstall(f *formula.Formula) error {
 		return err
 	}
 
+	usage := strings.TrimSpace(f.Usage)
+	if usage == "" {
+		usage = f.AgentUsageText()
+	}
 	rec := catalog.ToolRecord{
 		Name:        f.Name,
 		Version:     f.Version,
 		Tap:         f.Tap,
+		Description: strings.TrimSpace(f.Description),
+		Usage:       usage,
 		InstallPath: verDir,
 		ArtifactURL: f.URL,
 		SHA256:      f.SHA256,
@@ -105,6 +113,13 @@ func runInstall(f *formula.Formula) error {
 	if err := catalog.WriteTool(rec); err != nil {
 		return err
 	}
+	toolsPath, err := toolsmd.Refresh()
+	if err != nil {
+		return err
+	}
+	if err := agentconnect.Apply(toolsPath, agentconnect.Options{}); err != nil {
+		fmt.Fprintf(os.Stderr, "tars: connect agents (run 'tars connect' to retry): %v\n", err)
+	}
 
 	bin, _ := paths.Bin()
 	fmt.Printf("==> Installed %s %s\n", f.Name, f.Version)
@@ -113,6 +128,7 @@ func runInstall(f *formula.Formula) error {
 		fmt.Printf("    Add to PATH: %s\n", bin)
 	}
 	fmt.Printf("    Model catalog: ~/.tars/catalog/tools.json\n")
+	fmt.Printf("    Agent tools doc: %s\n", toolsPath)
 	return nil
 }
 

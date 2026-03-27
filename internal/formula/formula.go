@@ -32,6 +32,11 @@ type Formula struct {
 	// Model holds agent/model-facing usage metadata stored in the shared catalog.
 	Model *ModelMeta `json:"model,omitempty"`
 
+	// Usage is a short agent-facing guide (typically a few lines: how to invoke the tool,
+	// common flags, when to use it). Shown in tools.md and agent context.
+	// If empty, AgentUsageText falls back to description plus model.summary.
+	Usage string `json:"usage,omitempty"`
+
 	// Tap is set when loaded from a tap (not in file).
 	Tap string `json:"-"`
 }
@@ -114,4 +119,24 @@ func looksLikeSHA256(s string) bool {
 		return false
 	}
 	return true
+}
+
+// AgentUsageText returns the text to show agents: explicit Usage, or description plus model.summary.
+func (f *Formula) AgentUsageText() string {
+	if f == nil {
+		return ""
+	}
+	if u := strings.TrimSpace(f.Usage); u != "" {
+		return u
+	}
+	var parts []string
+	if d := strings.TrimSpace(f.Description); d != "" {
+		parts = append(parts, d)
+	}
+	if f.Model != nil {
+		if s := strings.TrimSpace(f.Model.Summary); s != "" {
+			parts = append(parts, s)
+		}
+	}
+	return strings.Join(parts, "\n\n")
 }

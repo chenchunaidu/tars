@@ -43,12 +43,14 @@ func cmdPublish() *cobra.Command {
 				tmpl := formula.Formula{
 					Name:        name,
 					Version:     "0.0.1",
-					Description: "Describe what this tool does for agents.",
-					URL:         "https://example.com/releases/" + name + "-0.0.1.tar.gz",
-					SHA256:      "REPLACE_WITH_SHA256_OF_RELEASE_ARTIFACT",
-					Bin:         []string{name},
+					Description: "One-line summary (Homebrew-style).",
+					Usage: "A few lines for coding agents: how to invoke this tool, typical flags, " +
+						"and when the user should reach for it (shown in ~/.tars/tools.md).",
+					URL:    "https://example.com/releases/" + name + "-0.0.1.tar.gz",
+					SHA256: "REPLACE_WITH_SHA256_OF_RELEASE_ARTIFACT",
+					Bin:    []string{name},
 					Model: &formula.ModelMeta{
-						Summary:    "One-line description for models.",
+						Summary:    "Optional extra one-liner; merged into tools.md if usage is empty.",
 						Invocation: "cli",
 						Examples:   []string{name + " --help"},
 					},

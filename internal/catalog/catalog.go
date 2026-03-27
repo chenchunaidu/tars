@@ -16,6 +16,8 @@ type ToolRecord struct {
 	Name        string           `json:"name"`
 	Version     string           `json:"version"`
 	Tap         string           `json:"tap,omitempty"`
+	Description string           `json:"description,omitempty"`
+	Usage       string           `json:"usage,omitempty"`
 	InstallPath string           `json:"install_path"`
 	ArtifactURL string           `json:"artifact_url"`
 	SHA256      string           `json:"sha256_verified"`
@@ -126,4 +128,25 @@ func RemoveTool(name string) error {
 		return err
 	}
 	return os.Rename(tmp, idxPath)
+}
+
+// ReadIndex loads the merged catalog index, or an empty index if missing.
+func ReadIndex() (Index, error) {
+	cdir, err := paths.CatalogDir()
+	if err != nil {
+		return Index{}, err
+	}
+	idxPath := filepath.Join(cdir, "tools.json")
+	b, err := os.ReadFile(idxPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return Index{Schema: schemaURL, Version: 1, Tools: []ToolRecord{}}, nil
+		}
+		return Index{}, err
+	}
+	var idx Index
+	if err := json.Unmarshal(b, &idx); err != nil {
+		return Index{}, err
+	}
+	return idx, nil
 }

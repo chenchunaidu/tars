@@ -7,9 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"tars/internal/agentconnect"
 	"tars/internal/binlink"
 	"tars/internal/catalog"
 	"tars/internal/registry"
+	"tars/internal/toolsmd"
 )
 
 func cmdUninstall() *cobra.Command {
@@ -39,6 +41,13 @@ func cmdUninstall() *cobra.Command {
 			}
 			if err := catalog.RemoveTool(name); err != nil {
 				return err
+			}
+			toolsPath, err := toolsmd.Refresh()
+			if err != nil {
+				return err
+			}
+			if err := agentconnect.Apply(toolsPath, agentconnect.Options{}); err != nil {
+				fmt.Fprintf(os.Stderr, "tars: connect agents (run 'tars connect' to retry): %v\n", err)
 			}
 			fmt.Printf("Uninstalled %s\n", name)
 			return nil

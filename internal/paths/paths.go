@@ -71,3 +71,12 @@ func TapListFile() (string, error) {
 	}
 	return filepath.Join(r, "taps.json"), nil
 }
+
+// ToolsMarkdown is the standalone agent-facing doc listing connected tools (~/.tars/tools.md).
+func ToolsMarkdown() (string, error) {
+	r, err := Root()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(r, "tools.md"), nil
+}
