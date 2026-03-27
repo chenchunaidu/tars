@@ -1,50 +1,195 @@
-# Every push to main (including PR merges) gets a new semver git tag; that tag push
-# triggers release.yml to build binaries and publish the GitHub Release.
+# Push to main: bump patch tag (if needed) and build + publish in this same run (GITHUB_TOKEN tag
+# pushes do not start other workflows). Push v* tag manually: same build + publish using that tag.
 name: Tag version on main
 
 on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
 
-# Avoid two merges racing on the same "next" patch version.
 concurrency:
   group: tag-version-on-main
   cancel-in-progress: false
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  tag:
+  resolve:
     runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.version.outputs.should_release }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Create and push next patch tag
+      - name: Decide version (auto-tag on main, or tag ref)
+        id: version
         run: |
           set -euo pipefail
-          if git describe --exact-match --tags HEAD 2>/dev/null; then
-            echo "HEAD already has a tag; skipping (no duplicate tag for this commit)."
-            exit 0
-          fi
-          git fetch --tags --force
-          latest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1 || true)"
-          if [ -z "$latest" ]; then
-            newtag="v0.0.1"
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            if git describe --exact-match --tags HEAD 2>/dev/null; then
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "HEAD already has a tag; skipping."
+              exit 0
+            fi
+            git fetch --tags --force
+            latest="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1 || true)"
+            if [ -z "$latest" ]; then
+              newtag="v0.0.1"
+            else
+              ver="${latest#v}"
+              major="${ver%%.*}"
+              rest="${ver#*.}"
+              minor="${rest%%.*}"
+              patch="${rest#*.}"
+              patch=$((patch + 1))
+              newtag="v${major}.${minor}.${patch}"
+            fi
+            echo "Tagging ${newtag} at $(git rev-parse --short HEAD)"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$newtag" -m "release ${newtag}"
+            git push origin "refs/tags/${newtag}"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "version=${newtag}" >> "$GITHUB_OUTPUT"
           else
-            ver="${latest#v}"
-            major="${ver%%.*}"
-            rest="${ver#*.}"
-            minor="${rest%%.*}"
-            patch="${rest#*.}"
-            patch=$((patch + 1))
-            newtag="v${major}.${minor}.${patch}"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
-          echo "Tagging ${newtag} at $(git rev-parse --short HEAD)"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$newtag" -m "release ${newtag}"
-          git push origin "refs/tags/${newtag}"
+
+  build:
+    needs: resolve
+    if: needs.resolve.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+
+    env:
+      CGO_ENABLED: "0"
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      VERSION: ${{ needs.resolve.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.version }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build and package
+        run: |
+          set -euo pipefail
+          BINARY="tars"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="tars.exe"
+          fi
+          go build -trimpath -ldflags="-s -w -X tars/internal/version.Version=${VERSION}" -o "$BINARY" ./cmd/tars
+          mkdir -p dist
+          STEM="tars_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip -j "dist/${STEM}.zip" "$BINARY"
+          else
+            tar -czvf "dist/${STEM}.tar.gz" "$BINARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+
+  release:
+    needs: [resolve, build]
+    if: needs.resolve.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.resolve.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' \) -exec cp {} release/ \;
+          cd release
+          for f in tars_*_linux_amd64.tar.gz; do [ -f "$f" ] && cp "$f" tars_linux_amd64.tar.gz && break; done
+          for f in tars_*_linux_arm64.tar.gz; do [ -f "$f" ] && cp "$f" tars_linux_arm64.tar.gz && break; done
+          for f in tars_*_darwin_amd64.tar.gz; do [ -f "$f" ] && cp "$f" tars_darwin_amd64.tar.gz && break; done
+          for f in tars_*_darwin_arm64.tar.gz; do [ -f "$f" ] && cp "$f" tars_darwin_arm64.tar.gz && break; done
+          for f in tars_*_windows_amd64.zip; do [ -f "$f" ] && cp "$f" tars_windows_amd64.zip && break; done
+          for f in tars_*_windows_arm64.zip; do [ -f "$f" ] && cp "$f" tars_windows_arm64.zip && break; done
+          sha256sum tars_* > checksums.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          prerelease: false
+          draft: true
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release
+        run: gh release edit "${VERSION}" --draft=false --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-github-packages:
+    needs: [resolve, build]
+    if: needs.resolve.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.version }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Publish platform packages to GitHub Packages
+        env:
+          OWNER_LC: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACTS: artifacts
+        run: |
+          set -euo pipefail
+          export SEMVER="${VERSION#v}"
+          export OWNER_LC="$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')"
+          chmod +x packaging/github-packages/publish.sh
+          packaging/github-packages/publish.sh
