@@ -1,6 +1,6 @@
 # GitHub Packages (npm)
 
-Releases are triggered only by pushing a **`v*`** git tag. Each release publishes **three** scoped npm packages to **GitHub Packages**—one per **platform** (OS). Each package bundles **amd64 and arm64** binaries; the `tars` command picks the right one at runtime (via the small Node launcher in `bin/tars.js`).
+This repo does **not** publish npm packages from CI. To publish **three** scoped packages to **GitHub Packages** yourself (one per OS, each with amd64 + arm64), download the release build artifacts, then run `publish.sh` with the env vars documented in that script. Each package uses the Node launcher in `bin/tars.js` to pick the right native binary.
 
 | Package | Platform |
 |---------|----------|

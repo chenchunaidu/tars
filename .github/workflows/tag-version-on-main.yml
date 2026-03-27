@@ -1,5 +1,5 @@
-# Push to main: bump patch tag (if needed) and build + publish in this same run (GITHUB_TOKEN tag
-# pushes do not start other workflows). Push v* tag manually: same build + publish using that tag.
+# Push to main: bump patch tag (if needed) and build + GitHub Release in this same run (GITHUB_TOKEN
+# tag pushes do not start other workflows). Push v* tag manually: same build + release using that tag.
 name: Tag version on main
 
 on:
@@ -15,7 +15,6 @@ concurrency:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   resolve:
@@ -160,36 +159,3 @@ jobs:
         run: gh release edit "${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-github-packages:
-    needs: [resolve, build]
-    if: needs.resolve.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ needs.resolve.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.resolve.outputs.version }}
-
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Publish platform packages to GitHub Packages
-        env:
-          OWNER_LC: ${{ github.repository_owner }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARTIFACTS: artifacts
-        run: |
-          set -euo pipefail
-          export SEMVER="${VERSION#v}"
-          export OWNER_LC="$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')"
-          chmod +x packaging/github-packages/publish.sh
-          packaging/github-packages/publish.sh
