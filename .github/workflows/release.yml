@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build:
@@ -105,3 +106,34 @@ jobs:
         run: gh release edit "${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # One npm package per OS (linux / darwin / windows), each bundling amd64 + arm64.
+  publish-github-packages:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Publish platform packages to GitHub Packages
+        env:
+          OWNER_LC: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACTS: artifacts
+        run: |
+          set -euo pipefail
+          export SEMVER="${VERSION#v}"
+          export OWNER_LC="$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')"
+          chmod +x packaging/github-packages/publish.sh
+          packaging/github-packages/publish.sh
