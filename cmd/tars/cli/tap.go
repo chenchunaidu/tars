@@ -5,13 +5,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/tap"
+	"tars/internal/tap"
 )
 
 func cmdTap() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "tap",
-		Short: "Manage extra formula taps (core is implicit; see AGENT_TOOLS_CORE_URL)",
+		Short: "Manage extra formula taps (core is implicit; see NXTOOLS_CORE_URL)",
 	}
 	root.AddCommand(
 		&cobra.Command{

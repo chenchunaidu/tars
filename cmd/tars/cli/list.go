@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/registry"
-	"agent-tools/internal/tap"
+	"tars/internal/registry"
+	"tars/internal/tap"
 )
 
 func cmdList() *cobra.Command {

@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"agent-tools/internal/formula"
-	"agent-tools/internal/paths"
+	"tars/internal/formula"
+	"tars/internal/paths"
 )
 
 // ToolRecord is the merged, model-facing view for a single tool.
-// Written to ~/.agent-tools/catalog/tools.json and per-tool model.json.
+// Written to ~/.tars/catalog/tools.json and per-tool model.json.
 type ToolRecord struct {
 	Name        string           `json:"name"`
 	Version     string           `json:"version"`
@@ -31,7 +31,7 @@ type Index struct {
 	Tools   []ToolRecord `json:"tools"`
 }
 
-const schemaURL = "https://agent-tools.dev/schema/catalog-v1.json"
+const schemaURL = "https://tars.dev/schema/catalog-v1.json"
 
 // WriteTool writes per-tool model.json under install path and refreshes global index.
 func WriteTool(rec ToolRecord) error {

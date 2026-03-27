@@ -9,13 +9,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/binlink"
-	"agent-tools/internal/catalog"
-	"agent-tools/internal/formula"
-	"agent-tools/internal/install"
-	"agent-tools/internal/paths"
-	"agent-tools/internal/registry"
-	"agent-tools/internal/tap"
+	"tars/internal/binlink"
+	"tars/internal/catalog"
+	"tars/internal/formula"
+	"tars/internal/install"
+	"tars/internal/paths"
+	"tars/internal/registry"
+	"tars/internal/tap"
 )
 
 func cmdInstall() *cobra.Command {
@@ -112,7 +112,7 @@ func runInstall(f *formula.Formula) error {
 	if bin != "" {
 		fmt.Printf("    Add to PATH: %s\n", bin)
 	}
-	fmt.Printf("    Model catalog: ~/.agent-tools/catalog/tools.json\n")
+	fmt.Printf("    Model catalog: ~/.tars/catalog/tools.json\n")
 	return nil
 }
 

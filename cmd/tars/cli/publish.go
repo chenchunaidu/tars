@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/formula"
+	"tars/internal/formula"
 )
 
 func cmdPublish() *cobra.Command {

@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"agent-tools/internal/paths"
+	"tars/internal/paths"
 )
 
-// Link creates symlinks in ~/.agent-tools/bin for each name pointing to installDir/name.
+// Link creates symlinks in ~/.tars/bin for each name pointing to installDir/name.
 func Link(installDir string, names []string) error {
 	bin, err := paths.Bin()
 	if err != nil {
@@ -30,7 +30,7 @@ func Link(installDir string, names []string) error {
 	return nil
 }
 
-// Unlink removes symlinks for names from ~/.agent-tools/bin.
+// Unlink removes symlinks for names from ~/.tars/bin.
 func Unlink(names []string) error {
 	bin, err := paths.Bin()
 	if err != nil {

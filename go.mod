@@ -1,4 +1,4 @@
-module agent-tools
+module tars
 
 go 1.22
 

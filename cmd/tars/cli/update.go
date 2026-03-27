@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/core"
-	"agent-tools/internal/tap"
+	"tars/internal/core"
+	"tars/internal/tap"
 )
 
 func cmdUpdate() *cobra.Command {

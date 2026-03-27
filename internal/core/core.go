@@ -7,19 +7,19 @@ import (
 	"path/filepath"
 	"strings"
 
-	"agent-tools/internal/paths"
+	"tars/internal/paths"
 )
 
 const (
 	// DefaultCoreGitURL is the canonical formula repo (homebrew-core analogue).
-	// Override with AGENT_TOOLS_CORE_URL.
-	DefaultCoreGitURL = "https://github.com/agent-tools/homebrew-core.git"
+	// Override with NXTOOLS_CORE_URL.
+	DefaultCoreGitURL = "https://github.com/tars/homebrew-core.git"
 )
 
 // GitURL returns the git remote for the core formula repository.
-// Set AGENT_TOOLS_CORE_URL to "" or "none" to disable the core tap.
+// Set NXTOOLS_CORE_URL to "" or "none" to disable the core tap.
 func GitURL() string {
-	v := strings.TrimSpace(os.Getenv("AGENT_TOOLS_CORE_URL"))
+	v := strings.TrimSpace(os.Getenv("NXTOOLS_CORE_URL"))
 	if v == "" {
 		return DefaultCoreGitURL
 	}
@@ -29,7 +29,7 @@ func GitURL() string {
 	return v
 }
 
-// Dir is ~/.agent-tools/taps/core (single clone of homebrew-core-style repo).
+// Dir is ~/.tars/taps/core (single clone of homebrew-core-style repo).
 func Dir() (string, error) {
 	base, err := paths.Taps()
 	if err != nil {

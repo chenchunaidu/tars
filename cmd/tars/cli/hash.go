@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/security"
+	"tars/internal/security"
 )
 
 func cmdHash() *cobra.Command {

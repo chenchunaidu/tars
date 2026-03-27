@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 )
 
-// Root is ~/.agent-tools
+// Root is ~/.tars
 func Root() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".agent-tools"), nil
+	return filepath.Join(home, ".tars"), nil
 }
 
 func Installs() (string, error) {

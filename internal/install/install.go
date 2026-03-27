@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"agent-tools/internal/formula"
-	"agent-tools/internal/security"
+	"tars/internal/formula"
+	"tars/internal/security"
 )
 
 const downloadTimeout = 30 * time.Minute
@@ -25,7 +25,7 @@ func Download(url, destPath, expectedSHA256 string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "agent-tools/1.0")
+	req.Header.Set("User-Agent", "tars/1.0")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

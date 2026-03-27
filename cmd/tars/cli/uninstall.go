@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/binlink"
-	"agent-tools/internal/catalog"
-	"agent-tools/internal/registry"
+	"tars/internal/binlink"
+	"tars/internal/catalog"
+	"tars/internal/registry"
 )
 
 func cmdUninstall() *cobra.Command {

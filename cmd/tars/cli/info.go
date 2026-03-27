@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"agent-tools/internal/paths"
-	"agent-tools/internal/registry"
-	"agent-tools/internal/tap"
+	"tars/internal/paths"
+	"tars/internal/registry"
+	"tars/internal/tap"
 )
 
 func cmdInfo() *cobra.Command {

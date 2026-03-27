@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"agent-tools/internal/paths"
+	"tars/internal/paths"
 )
 
 // Entry is one installed tool.

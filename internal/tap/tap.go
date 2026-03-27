@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"agent-tools/internal/core"
-	"agent-tools/internal/formula"
-	"agent-tools/internal/paths"
+	"tars/internal/core"
+	"tars/internal/formula"
+	"tars/internal/paths"
 )
 
 // Tap is a cloned formula repository (Homebrew tap analogue).
@@ -67,7 +67,7 @@ func SaveList(taps []Tap) error {
 // Add clones url into taps dir and registers the tap (third-party taps; core is implicit).
 func Add(name, gitURL string) error {
 	if strings.EqualFold(name, "core") {
-		return fmt.Errorf(`tap name "core" is reserved for the default formula repo; set AGENT_TOOLS_CORE_URL instead`)
+		return fmt.Errorf(`tap name "core" is reserved for the default formula repo; set NXTOOLS_CORE_URL instead`)
 	}
 	base, err := paths.Taps()
 	if err != nil {

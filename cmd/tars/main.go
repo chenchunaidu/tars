@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"agent-tools/cmd/agent-tools/cli"
+	"tars/cmd/tars/cli"
 )
 
 func main() {
