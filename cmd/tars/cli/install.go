@@ -106,16 +106,11 @@ func runInstall(f *formula.Formula) error {
 		return err
 	}
 
-	usage := strings.TrimSpace(f.Usage)
-	if usage == "" {
-		usage = f.AgentUsageText()
-	}
 	rec := catalog.ToolRecord{
 		Name:        f.Name,
 		Version:     f.Version,
 		Tap:         f.Tap,
 		Description: strings.TrimSpace(f.Description),
-		Usage:       usage,
 		InstallPath: verDir,
 		ArtifactURL: artifactURL,
 		SHA256:      sha256,

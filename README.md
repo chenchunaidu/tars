@@ -37,7 +37,7 @@ flowchart LR
   ToolsMD -->|connect| Pi
 ```
 
-1. **Formulas** (JSON) describe name, version, download URL, `sha256`, binaries, and optional usage text for agents.
+1. **Formulas** (JSON) describe name, version, download URL, `sha256`, binaries, and optional `description` / `model` text for agents.
 2. **`tars install`** downloads the artifact, checks the hash, unpacks under `~/.tars/installs`, symlinks into `~/.tars/bin`, updates `~/.tars/registry.json` and `~/.tars/catalog/tools.json`, refreshes `~/.tars/tools.md`, then runs the same **connect** step as `tars connect` (unless that step fails; you can retry with `tars connect`).
 3. **`tars connect`** rebuilds `tools.md` and merges a managed block into global agent files so assistants read `tools.md` when the task may involve those CLIs.
 4. Run **`tars link`** once so the **`tars` command is on your PATH** in new terminals (it symlinks into `~/.tars/bin` and updates your shell rc or Windows user PATH). Same directory holds tools from **`tars install`**.
@@ -196,4 +196,4 @@ Generate shell completion scripts (see `tars completion --help`).
 | `cache/downloads/` | Download cache. |
 | `registry.json` | Installed-tool registry. |
 | `catalog/tools.json` | Merged catalog for tools/models. |
-| `tools.md` | Human-readable list and usage for agents (source of truth for **connect**). |
+| `tools.md` | Human-readable list and agent-facing notes for **connect**. |

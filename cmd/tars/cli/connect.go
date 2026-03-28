@@ -26,11 +26,12 @@ func cmdConnect() *cobra.Command {
   • Gemini CLI: ~/.gemini/GEMINI.md
   • Pi coding agent: ~/.pi/agent/AGENTS.md
 
-Each Markdown target gets the same managed <!-- tars-connect --> block: read tools.md when
-the task may involve tars-installed CLIs; otherwise continue normally.
+Each Markdown target gets the same managed <!-- tars-connect --> block: always read tools.md
+early, match a listed tool to the task if any, then use that binary’s own help (e.g. --help / docs);
+if nothing matches, continue normally.
 
 Use --no-cursor, --no-claude, --no-gemini, or --no-pi to skip one. Formulas should include a
-"usage" field (or "description" plus optional "model.summary") for best results in tools.md.`,
+"description" (plus optional "model.summary") for best results in tools.md.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out, err := toolsmd.Refresh()
 			if err != nil {

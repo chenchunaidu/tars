@@ -75,21 +75,28 @@ func TestLegacyURLStillWorks(t *testing.T) {
 }
 
 func TestAgentUsageText(t *testing.T) {
-	explicit := &Formula{
+	empty := &Formula{
 		Name: "x", Version: "1", URL: "https://a/b",
 		SHA256: hex64,
-		Usage:  "Run with --help.\nSee docs.",
 	}
-	if got := explicit.AgentUsageText(); got != explicit.Usage {
-		t.Fatalf("got %q want %q", got, explicit.Usage)
+	if got := empty.AgentUsageText(); got != "" {
+		t.Fatalf("empty: got %q want empty", got)
 	}
-	fallback := &Formula{
+	descOnly := &Formula{
+		Name: "x", Version: "1", URL: "https://a/b",
+		SHA256:      hex64,
+		Description: "Primary for agents",
+	}
+	if got := descOnly.AgentUsageText(); got != "Primary for agents" {
+		t.Fatalf("description only: got %q", got)
+	}
+	descAndSummary := &Formula{
 		Name: "x", Version: "1", URL: "https://a/b",
 		SHA256:      hex64,
 		Description: "Short desc",
 		Model:       &ModelMeta{Summary: "Model summary"},
 	}
-	if got := fallback.AgentUsageText(); got != "Short desc\n\nModel summary" {
+	if got := descAndSummary.AgentUsageText(); got != "Short desc\n\nModel summary" {
 		t.Fatalf("got %q", got)
 	}
 }

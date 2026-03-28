@@ -15,10 +15,10 @@ const (
 
 // Options control which global agent files are written.
 type Options struct {
-	SkipCursor  bool
-	SkipClaude  bool
-	SkipGemini  bool
-	SkipPi      bool
+	SkipCursor bool
+	SkipClaude bool
+	SkipGemini bool
+	SkipPi     bool
 }
 
 // Apply writes global agent instructions so assistants read ~/.tars/tools.md when relevant.
@@ -63,20 +63,33 @@ func writeCursorRule(home, toolsAbs string) error {
 	}
 	var b strings.Builder
 	b.WriteString(`---
-description: Tars — use tools.md when the task involves tars-installed CLIs
+description: Tars — read tools.md each session; match tools, then consult their docs
 alwaysApply: true
 ---
 
 # Tars installed tools
 
-When a session starts or the user asks about **command-line tools**, **CLIs**, or binaries under **~/.tars**, decide whether this applies:
+Use a **two-step** workflow for binaries installed via **tars**.
 
-- **If** the question may involve tools installed with **tars** (or paths like **~/.tars/bin**), **read** **`)
+## Step 1 — Read the catalog
+
+- **Always read** **`)
 	b.WriteString(toolsAbs)
-	b.WriteString(`** first when you need names, flags, or usage. Prefer that file over guessing.
-- **If** that file is missing, says there are no tools, or the task is clearly unrelated (no local CLI/tars angle), **continue normally** without requiring it.
+	b.WriteString(`** near the **start of the session** or **before** you act on work that could involve a local CLI. You do **not** need the user to mention command-line tools, CLIs, or **~/.tars** first.
+- Use it to see **which tools exist**, paths such as **~/.tars/bin**, and each tool’s **description** (plus optional notes) **tars** recorded.
+- **If** the file is **missing**, says there are no tools, or **no listed tool matches** the current task, **stop here** and **continue normally** — do not block on tars.
 
-Regenerate the doc with: `)
+## Step 2 — Docs before invocation
+
+- When a **listed tool matches** the task, **do not guess** flags, subcommands, or behavior.
+- **Consult that tool’s documentation** next, in order: what **tools.md** already states (primarily **description**); then the binary’s own help (e.g. **`)
+	b.WriteString("<tool-name>")
+	b.WriteString(` --help** / **-h**), or a **docs**-style subcommand when that applies (e.g. **`)
+	b.WriteString("<tool-name>")
+	b.WriteString(` docs**).
+- Prefer those sources over memory.
+
+Regenerate **tools.md** and refresh this rule with: `)
 	b.WriteString("`tars connect`")
 	b.WriteString(`.
 
@@ -122,12 +135,15 @@ func buildTarsSectionBlock(toolsAbs string) string {
 	var b strings.Builder
 	b.WriteString(sectionBegin)
 	b.WriteString("\n\n## Tars (CLI tools)\n\n")
-	b.WriteString("When you begin or the user asks about **local CLIs** / **command-line tools** installed with **tars**:\n\n")
-	b.WriteString("1. **If** **")
+	b.WriteString("**Step 1:** Near the start of a session or before work that might use a local CLI, **read** **")
 	b.WriteString(toolsAbs)
-	b.WriteString("** exists and the task may involve those tools (or **~/.tars** generally), **read it** for usage and paths.\n")
-	b.WriteString("2. **Otherwise** (file missing, empty for this purpose, or question unrelated), **continue as usual** — do not block on this file.\n\n")
-	b.WriteString("Ensure **~/.tars/bin** is on PATH when running those binaries. Refresh: `tars connect`.\n\n")
+	b.WriteString("** (always — the user need not mention CLIs or **~/.tars**). If missing, empty, or no tool matches the task, **continue normally**.\n\n")
+	b.WriteString("**Step 2:** If a listed tool **does** match, **do not guess** — use what **tools.md** says (description first), then **")
+	b.WriteString("<tool-name>")
+	b.WriteString(" --help** / **-h** or **")
+	b.WriteString("<tool-name>")
+	b.WriteString(" docs** when applicable.\n\n")
+	b.WriteString("Keep **~/.tars/bin** on PATH. Refresh: `tars connect`.\n\n")
 	b.WriteString(sectionEnd)
 	return b.String()
 }

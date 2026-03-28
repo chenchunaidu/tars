@@ -13,15 +13,14 @@ import (
 // ToolRecord is the merged, model-facing view for a single tool.
 // Written to ~/.tars/catalog/tools.json and per-tool model.json.
 type ToolRecord struct {
-	Name        string           `json:"name"`
-	Version     string           `json:"version"`
-	Tap         string           `json:"tap,omitempty"`
-	Description string           `json:"description,omitempty"`
-	Usage       string           `json:"usage,omitempty"`
-	InstallPath string           `json:"install_path"`
-	ArtifactURL string           `json:"artifact_url"`
-	SHA256      string           `json:"sha256_verified"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	Name        string             `json:"name"`
+	Version     string             `json:"version"`
+	Tap         string             `json:"tap,omitempty"`
+	Description string             `json:"description,omitempty"`
+	InstallPath string             `json:"install_path"`
+	ArtifactURL string             `json:"artifact_url"`
+	SHA256      string             `json:"sha256_verified"`
+	UpdatedAt   time.Time          `json:"updated_at"`
 	Model       *formula.ModelMeta `json:"model,omitempty"`
 }
 
