@@ -15,23 +15,23 @@ import (
 
 func cmdConnect() *cobra.Command {
 	var copyTo string
-	var noCursor, noClaude, noGemini, noPi bool
 	c := &cobra.Command{
-		Use:   "connect",
-		Short: "Regenerate ~/.tars/tools.md and wire Cursor, Claude, Gemini CLI, and Pi",
-		Long: `Rebuilds ~/.tars/tools.md and updates global agent instructions:
+		Use:   "connect (all | AGENT [AGENT...])",
+		Short: "Regenerate ~/.tars/tools.md and wire chosen coding agents",
+		Long: `Rebuilds ~/.tars/tools.md, then updates global agent instructions only for the agents you name.
 
-  • Cursor: ~/.cursor/rules/tars-tools.mdc (alwaysApply)
-  • Claude Code: ~/.claude/CLAUDE.md
-  • Gemini CLI: ~/.gemini/GEMINI.md
-  • Pi coding agent: ~/.pi/agent/AGENTS.md
+  • cursor   — ~/.cursor/rules/tars-tools.mdc (alwaysApply)
+  • claude   — ~/.claude/CLAUDE.md
+  • gemini   — ~/.gemini/GEMINI.md
+  • pi       — ~/.pi/agent/AGENTS.md
 
-Each Markdown target gets the same managed <!-- tars-connect --> block: always read tools.md
-early, match a listed tool to the task if any, then use that binary’s own help (e.g. --help / docs);
-if nothing matches, continue normally.
+Use ` + "`tars connect all`" + ` to update every agent. Otherwise pass one or more agent names, e.g.
+` + "`tars connect cursor`" + ` or ` + "`tars connect cursor claude`" + `.
 
-Use --no-cursor, --no-claude, --no-gemini, or --no-pi to skip one. Formulas should include a
-"description" (plus optional "model.summary") for best results in tools.md.`,
+` + "`tars install`" + ` / ` + "`tars uninstall`" + ` still run connect for all agents automatically.
+
+Formulas should include a "description" (plus optional "model.summary") for best results in tools.md.`,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out, err := toolsmd.Refresh()
 			if err != nil {
@@ -42,23 +42,23 @@ Use --no-cursor, --no-claude, --no-gemini, or --no-pi to skip one. Formulas shou
 			if err != nil {
 				return err
 			}
-			opts := agentconnect.Options{
-				SkipCursor: noCursor, SkipClaude: noClaude,
-				SkipGemini: noGemini, SkipPi: noPi,
+			opts, err := agentconnect.OptionsFromConnectArgs(args)
+			if err != nil {
+				return err
 			}
 			if err := agentconnect.Apply(out, opts); err != nil {
 				return err
 			}
-			if !noCursor {
+			if !opts.SkipCursor {
 				fmt.Printf("Wrote Cursor global rule: %s\n", agentconnect.CursorRulePath(home))
 			}
-			if !noClaude {
+			if !opts.SkipClaude {
 				fmt.Printf("Updated Claude Code global: %s\n", agentconnect.ClaudeGlobalPath(home))
 			}
-			if !noGemini {
+			if !opts.SkipGemini {
 				fmt.Printf("Updated Gemini CLI global: %s\n", agentconnect.GeminiGlobalPath(home))
 			}
-			if !noPi {
+			if !opts.SkipPi {
 				fmt.Printf("Updated Pi global: %s\n", agentconnect.PiGlobalPath(home))
 			}
 			if copyTo != "" {
@@ -76,10 +76,6 @@ Use --no-cursor, --no-claude, --no-gemini, or --no-pi to skip one. Formulas shou
 		},
 	}
 	c.Flags().StringVar(&copyTo, "copy", "", "copy tools.md into this directory (e.g. current project root)")
-	c.Flags().BoolVar(&noCursor, "no-cursor", false, "do not write ~/.cursor/rules/tars-tools.mdc")
-	c.Flags().BoolVar(&noClaude, "no-claude", false, "do not merge the block into ~/.claude/CLAUDE.md")
-	c.Flags().BoolVar(&noGemini, "no-gemini", false, "do not merge the block into ~/.gemini/GEMINI.md")
-	c.Flags().BoolVar(&noPi, "no-pi", false, "do not merge the block into ~/.pi/agent/AGENTS.md")
 	return c
 }
 

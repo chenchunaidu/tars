@@ -14,9 +14,8 @@ var rootCmd = &cobra.Command{
 	Short: "Package manager for agent tools (Homebrew-style)",
 	Long: `tars installs tools into ~/.tars, verifies SHA256 checksums,
 and maintains a shared catalog (~/.tars/catalog/tools.json) plus a standalone
-~/.tars/tools.md for coding agents. "tars connect" (and install/uninstall) refresh
-that doc and update global instructions for Cursor, Claude Code, Gemini CLI, and Pi
-so assistants check tools.md when relevant.
+~/.tars/tools.md for coding agents. "tars connect all" (or "tars connect <agent>") updates
+that doc and chosen global instructions; install/uninstall refresh all agents.
 
 Formulas come from the default core repository (homebrew-core analogue, cloned to
 ~/.tars/taps/core) plus any extra taps added with "tap add". Override the
@@ -27,7 +26,7 @@ core URL with TARS_CORE_URL.`,
   tars update && tars install ripgrep
   tars list
   tars list --available
-  tars connect --copy .
+  tars connect all --copy .
   tars help install`,
 }
 

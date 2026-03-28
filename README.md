@@ -38,8 +38,8 @@ flowchart LR
 ```
 
 1. **Formulas** (JSON) describe name, version, download URL, `sha256`, binaries, and optional `description` / `model` text for agents.
-2. **`tars install`** downloads the artifact, checks the hash, unpacks under `~/.tars/installs`, symlinks into `~/.tars/bin`, updates `~/.tars/registry.json` and `~/.tars/catalog/tools.json`, refreshes `~/.tars/tools.md`, then runs the same **connect** step as `tars connect` (unless that step fails; you can retry with `tars connect`).
-3. **`tars connect`** rebuilds `tools.md` and merges a managed block into global agent files so assistants read `tools.md` when the task may involve those CLIs.
+2. **`tars install`** downloads the artifact, checks the hash, unpacks under `~/.tars/installs`, symlinks into `~/.tars/bin`, updates `~/.tars/registry.json` and `~/.tars/catalog/tools.json`, refreshes `~/.tars/tools.md`, then runs the same **connect** step as `tars connect all` (unless that step fails; you can retry with `tars connect all`).
+3. **`tars connect all`** (or **`tars connect <agent>...`**) rebuilds `tools.md` and merges a managed block into the global files for the agents you choose (`cursor`, `claude`, `gemini`, `pi`).
 4. Run **`tars link`** once so the **`tars` command is on your PATH** in new terminals (it symlinks into `~/.tars/bin` and updates your shell rc or Windows user PATH). Same directory holds tools from **`tars install`**.
 
 ## Install
@@ -69,7 +69,7 @@ https://github.com/OWNER/REPO/releases/latest/download/tars_darwin_arm64.tar.gz
 https://github.com/OWNER/REPO/releases/latest/download/tars_windows_amd64.zip
 ```
 
-Extract the binary, run **`tars link`**, open a **new** terminal (or `source` your rc file), then run `tars connect` if you use agent integration.
+Extract the binary, run **`tars link`**, open a **new** terminal (or `source` your rc file), then run `tars connect all` (or `tars connect <agent>`) if you use agent integration.
 
 **macOS (“can’t be opened because Apple cannot check it for malicious software”):** Release builds are not Apple-notarized. After extracting, clear the download quarantine and run again:
 
@@ -140,24 +140,23 @@ Clone an additional formula repository under `~/.tars/taps/<name>`.
 
 Print registered taps (including core), tab-separated name and URL.
 
-### `tars connect`
+### `tars connect all` · `tars connect AGENT [AGENT...]`
 
-Regenerate `~/.tars/tools.md` and merge a managed `<!-- tars-connect -->` block into:
+Regenerate `~/.tars/tools.md`, then merge a managed `<!-- tars-connect -->` block only into the agents you name:
 
-- `~/.cursor/rules/tars-tools.mdc` (Cursor, `alwaysApply`)
-- `~/.claude/CLAUDE.md`
-- `~/.gemini/GEMINI.md`
-- `~/.pi/agent/AGENTS.md`
+- **`all`** — update Cursor, Claude Code, Gemini CLI, and Pi.
+- **`cursor`** — `~/.cursor/rules/tars-tools.mdc` (`alwaysApply`)
+- **`claude`** — `~/.claude/CLAUDE.md`
+- **`gemini`** — `~/.gemini/GEMINI.md`
+- **`pi`** — `~/.pi/agent/AGENTS.md`
 
-**Flags:**
+Examples: `tars connect cursor`, `tars connect cursor claude`, `tars connect all`.
+
+**`tars install`** / **`tars uninstall`** still refresh agent globals for **all** agents (same as `tars connect all`).
 
 | Flag | Description |
 |------|-------------|
 | `--copy <dir>` | Copy `tools.md` into `<dir>/tools.md` (e.g. project root). |
-| `--no-cursor` | Skip Cursor rule. |
-| `--no-claude` | Skip Claude global. |
-| `--no-gemini` | Skip Gemini global. |
-| `--no-pi` | Skip Pi global. |
 
 ### `tars catalog`
 

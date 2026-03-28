@@ -125,7 +125,7 @@ func runInstall(f *formula.Formula) error {
 		return err
 	}
 	if err := agentconnect.Apply(toolsPath, agentconnect.Options{}); err != nil {
-		fmt.Fprintf(os.Stderr, "tars: connect agents (run 'tars connect' to retry): %v\n", err)
+		fmt.Fprintf(os.Stderr, "tars: connect agents (run 'tars connect all' to retry): %v\n", err)
 	}
 
 	bin, _ := paths.Bin()

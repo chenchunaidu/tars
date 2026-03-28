@@ -21,6 +21,55 @@ type Options struct {
 	SkipPi     bool
 }
 
+// OptionsFromConnectArgs parses `tars connect` arguments. A single argument "all" (case-insensitive)
+// wires every agent; otherwise each token must be one of: cursor, claude, gemini, pi.
+func OptionsFromConnectArgs(args []string) (Options, error) {
+	if len(args) == 0 {
+		return Options{}, fmt.Errorf("specify agent name(s) or `all` (e.g. tars connect cursor, tars connect all)")
+	}
+	if len(args) == 1 && strings.EqualFold(strings.TrimSpace(args[0]), "all") {
+		return Options{}, nil
+	}
+	o := Options{
+		SkipCursor: true, SkipClaude: true, SkipGemini: true, SkipPi: true,
+	}
+	seen := map[string]struct{}{}
+	for _, raw := range args {
+		if strings.EqualFold(strings.TrimSpace(raw), "all") {
+			return Options{}, fmt.Errorf(`"all" cannot be combined with other agents`)
+		}
+		n := strings.ToLower(strings.TrimSpace(raw))
+		var key string
+		switch n {
+		case "cursor":
+			key = "cursor"
+		case "claude":
+			key = "claude"
+		case "gemini":
+			key = "gemini"
+		case "pi":
+			key = "pi"
+		default:
+			return Options{}, fmt.Errorf("unknown agent %q (use cursor, claude, gemini, pi, or all)", raw)
+		}
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		switch key {
+		case "cursor":
+			o.SkipCursor = false
+		case "claude":
+			o.SkipClaude = false
+		case "gemini":
+			o.SkipGemini = false
+		case "pi":
+			o.SkipPi = false
+		}
+	}
+	return o, nil
+}
+
 // Apply writes global agent instructions so assistants read ~/.tars/tools.md when relevant.
 // toolsMD must be the absolute path to ~/.tars/tools.md.
 func Apply(toolsMD string, opts Options) error {
@@ -90,7 +139,7 @@ Use a **two-step** workflow for binaries installed via **tars**.
 - Prefer those sources over memory.
 
 Regenerate **tools.md** and refresh this rule with: `)
-	b.WriteString("`tars connect`")
+	b.WriteString("`tars connect all`")
 	b.WriteString(`.
 
 `)
@@ -143,7 +192,7 @@ func buildTarsSectionBlock(toolsAbs string) string {
 	b.WriteString(" --help** / **-h** or **")
 	b.WriteString("<tool-name>")
 	b.WriteString(" docs** when applicable.\n\n")
-	b.WriteString("Keep **~/.tars/bin** on PATH. Refresh: `tars connect`.\n\n")
+	b.WriteString("Keep **~/.tars/bin** on PATH. Refresh: `tars connect all`.\n\n")
 	b.WriteString(sectionEnd)
 	return b.String()
 }
