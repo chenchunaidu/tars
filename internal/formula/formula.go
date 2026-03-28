@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+// PlatformDefault is the platforms map key used when the host GOOS/GOARCH has no entry.
+const PlatformDefault = "default"
+
+// PlatformArtifact is one release asset (url + sha256) for a given GOOS_GOARCH or "default".
+type PlatformArtifact struct {
+	URL    string `json:"url"`
+	SHA256 string `json:"sha256"`
+}
+
 // Formula describes an installable agent tool (Homebrew-style manifest).
 type Formula struct {
 	Name        string `json:"name"`
@@ -17,11 +26,15 @@ type Formula struct {
 	Homepage    string `json:"homepage,omitempty"`
 	License     string `json:"license,omitempty"`
 
-	// URL is the artifact URL (tar.gz, zip, or single binary).
-	URL string `json:"url"`
+	// URL is the artifact URL when platforms is omitted (tar.gz, zip, or single binary).
+	URL string `json:"url,omitempty"`
 
-	// SHA256 is required for integrity (Homebrew bottle-style).
-	SHA256 string `json:"sha256"`
+	// SHA256 is required for integrity when platforms is omitted.
+	SHA256 string `json:"sha256,omitempty"`
+
+	// Platforms maps "linux_amd64", "darwin_arm64", "windows_amd64", etc., and optional "default".
+	// When non-empty, install picks the host key from goos/goarch, else "default", else errors.
+	Platforms map[string]PlatformArtifact `json:"platforms,omitempty"`
 
 	// Bin lists executable names expected in the archive (or root for single file).
 	Bin []string `json:"bin,omitempty"`
@@ -70,28 +83,98 @@ func Parse(data []byte) (*Formula, error) {
 	if err := json.Unmarshal(data, &f); err != nil {
 		return nil, err
 	}
+	f.Platforms = normalizePlatforms(f.Platforms)
+	f.Name = strings.TrimSpace(f.Name)
+	f.Version = strings.TrimSpace(f.Version)
+	f.URL = strings.TrimSpace(f.URL)
+	f.SHA256 = strings.TrimSpace(f.SHA256)
 	if err := f.Validate(); err != nil {
 		return nil, err
 	}
 	return &f, nil
 }
 
+func normalizePlatforms(m map[string]PlatformArtifact) map[string]PlatformArtifact {
+	if len(m) == 0 {
+		return nil
+	}
+	out := make(map[string]PlatformArtifact, len(m))
+	for k, v := range m {
+		nk := strings.ToLower(strings.TrimSpace(k))
+		if nk == "" {
+			continue
+		}
+		out[nk] = PlatformArtifact{
+			URL:    strings.TrimSpace(v.URL),
+			SHA256: strings.TrimSpace(v.SHA256),
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// PlatformKey is the lookup key for Platforms: lowercase goos + "_" + lowercase goarch (Go's names).
+func PlatformKey(goos, goarch string) string {
+	return strings.ToLower(goos) + "_" + strings.ToLower(goarch)
+}
+
+// ResolveArtifact returns the download URL and SHA256 for goos/goarch.
+// When platforms is set, Selected is the map key used ("linux_amd64", "default", etc.).
+// When using legacy url/sha256 only, Selected is empty.
+func (f *Formula) ResolveArtifact(goos, goarch string) (url, sha256, selected string, err error) {
+	if f == nil {
+		return "", "", "", errors.New("nil formula")
+	}
+	if len(f.Platforms) > 0 {
+		key := PlatformKey(goos, goarch)
+		if a, ok := f.Platforms[key]; ok && a.URL != "" {
+			return a.URL, a.SHA256, key, nil
+		}
+		if a, ok := f.Platforms[PlatformDefault]; ok && a.URL != "" {
+			return a.URL, a.SHA256, PlatformDefault, nil
+		}
+		return "", "", "", fmt.Errorf(
+			`formula: no platforms entry for %q and no %q fallback`,
+			key, PlatformDefault,
+		)
+	}
+	if f.URL == "" {
+		return "", "", "", errors.New("formula: url is required when platforms is empty")
+	}
+	if f.SHA256 == "" {
+		return "", "", "", errors.New("formula: sha256 is required when platforms is empty")
+	}
+	return f.URL, f.SHA256, "", nil
+}
+
 func (f *Formula) Validate() error {
 	if f == nil {
 		return errors.New("nil formula")
 	}
-	f.Name = strings.TrimSpace(f.Name)
-	f.Version = strings.TrimSpace(f.Version)
-	f.URL = strings.TrimSpace(f.URL)
-	f.SHA256 = strings.TrimSpace(f.SHA256)
 	if f.Name == "" {
 		return errors.New("formula: name is required")
 	}
 	if f.Version == "" {
 		return errors.New("formula: version is required")
 	}
+	if len(f.Platforms) > 0 {
+		for key, a := range f.Platforms {
+			if a.URL == "" {
+				return fmt.Errorf("formula: platforms[%q] missing url", key)
+			}
+			if a.SHA256 == "" {
+				return fmt.Errorf("formula: platforms[%q] missing sha256", key)
+			}
+			if !looksLikeSHA256(a.SHA256) {
+				return fmt.Errorf("formula: platforms[%q] sha256 must be 64 hex characters", key)
+			}
+		}
+		return nil
+	}
 	if f.URL == "" {
-		return errors.New("formula: url is required")
+		return errors.New("formula: url is required when platforms is empty")
 	}
 	if f.SHA256 == "" {
 		return errors.New("formula: sha256 is required for security verification")

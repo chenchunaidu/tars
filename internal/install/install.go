@@ -56,7 +56,8 @@ func Download(url, destPath, expectedSHA256 string) error {
 }
 
 // Install extracts or copies artifact into prefix and returns install root for the version.
-func Install(f *formula.Formula, artifactPath, prefix string) (string, error) {
+// sourceURL is the download URL (used to pick the filename for single-binary artifacts).
+func Install(f *formula.Formula, artifactPath, prefix, sourceURL string) (string, error) {
 	verDir := filepath.Join(prefix, f.Name, f.Version)
 	if err := os.MkdirAll(verDir, 0o755); err != nil {
 		return "", err
@@ -74,7 +75,7 @@ func Install(f *formula.Formula, artifactPath, prefix string) (string, error) {
 		}
 	default:
 		// Single binary
-		base := filepath.Base(f.URL)
+		base := filepath.Base(sourceURL)
 		if base == "" || base == "/" {
 			base = f.Name
 		}

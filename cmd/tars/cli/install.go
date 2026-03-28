@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -36,6 +37,17 @@ func cmdInstall() *cobra.Command {
 }
 
 func runInstall(f *formula.Formula) error {
+	artifactURL, sha256, platKey, err := f.ResolveArtifact(runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		return err
+	}
+	if platKey != "" {
+		hostKey := formula.PlatformKey(runtime.GOOS, runtime.GOARCH)
+		if platKey == formula.PlatformDefault {
+			fmt.Printf("==> No platforms[%s]; using %q\n", hostKey, formula.PlatformDefault)
+		}
+	}
+
 	cacheDir, err := paths.Cache()
 	if err != nil {
 		return err
@@ -43,14 +55,14 @@ func runInstall(f *formula.Formula) error {
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return err
 	}
-	base := filepath.Base(f.URL)
+	base := filepath.Base(artifactURL)
 	if base == "" || base == "/" {
 		base = f.Name + "-artifact"
 	}
 	cached := filepath.Join(cacheDir, fmt.Sprintf("%s-%s-%s", f.Name, f.Version, sanitizeFilePart(base)))
 
-	fmt.Printf("==> Downloading %s\n", f.URL)
-	if err := install.Download(f.URL, cached, f.SHA256); err != nil {
+	fmt.Printf("==> Downloading %s\n", artifactURL)
+	if err := install.Download(artifactURL, cached, sha256); err != nil {
 		return err
 	}
 	fmt.Println("==> SHA256 verified")
@@ -64,7 +76,7 @@ func runInstall(f *formula.Formula) error {
 	}
 
 	fmt.Println("==> Installing")
-	verDir, err := install.Install(f, cached, prefix)
+	verDir, err := install.Install(f, cached, prefix, artifactURL)
 	if err != nil {
 		return err
 	}
@@ -86,8 +98,8 @@ func runInstall(f *formula.Formula) error {
 		Version:     f.Version,
 		Tap:         f.Tap,
 		InstallPath: verDir,
-		ArtifactURL: f.URL,
-		SHA256:      f.SHA256,
+		ArtifactURL: artifactURL,
+		SHA256:      sha256,
 		InstalledAt: time.Now().UTC(),
 	}
 	if err := reg.Set(entry); err != nil {
@@ -105,8 +117,8 @@ func runInstall(f *formula.Formula) error {
 		Description: strings.TrimSpace(f.Description),
 		Usage:       usage,
 		InstallPath: verDir,
-		ArtifactURL: f.URL,
-		SHA256:      f.SHA256,
+		ArtifactURL: artifactURL,
+		SHA256:      sha256,
 		UpdatedAt:   time.Now().UTC(),
 		Model:       f.Model,
 	}
