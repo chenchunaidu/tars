@@ -13,21 +13,21 @@ tars cli internally uses tars tools to install tools and connect them to agents.
 
 ## Install
 
-To install tars cli go to Releases in github and download the latest release for your operating system.
+1. To install tars cli go to [Releases](https://github.com/chenchunaidu/tars/releases/) in github and download the latest release for your operating system.
 
-After installation Unpack the release and run the following command to add tars to your PATH:
+2. After installation Unpack the release and run the following command to add tars to your PATH:
 
 ```bash
 ./tars link
 ```
 
-if you get can’t be opened because Apple cannot check it for malicious software error, you can open it by running the following command:
+3. if you get can’t be opened because Apple cannot check it for malicious software error, you can open it by running the following command:
 
 ```bash
 xattr -d com.apple.quarantine tars
 ```
 
-Then run the following command to add tars to your PATH:
+4. Then run the following command to add tars to your PATH:
 
 ```bash
 ./tars link
