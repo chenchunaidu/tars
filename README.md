@@ -2,7 +2,7 @@
 
 **tars** is package manager like homebrew which connects tools to multiple agents like Cursor, Claude Code, Gemini CLI, and Pi.
 
-## How it fits together
+## How does it work?
 
 **tars** contains two main modules:
 
